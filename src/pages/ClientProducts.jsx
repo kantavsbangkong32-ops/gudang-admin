@@ -17,6 +17,7 @@ export default function ClientProducts() {
   const [categorySearch, setCategorySearch] = useState('')
   const [adding, setAdding] = useState(null)
   const [cartCount, setCartCount] = useState(0)
+  const [cartWiggle, setCartWiggle] = useState(false)
 
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => setCategories(data || []))
@@ -106,6 +107,8 @@ export default function ClientProducts() {
 
     setAdding(null)
     fetchCartCount()
+    setCartWiggle(true)
+    setTimeout(() => setCartWiggle(false), 500)
   }
 
   function parsePhotos(photoUrl) {
@@ -270,7 +273,7 @@ export default function ClientProducts() {
       {cartCount > 0 && (
         <button
           onClick={() => navigate('/client/cart')}
-          className="fixed z-40 bg-shopee hover:bg-shopee-dark text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition hover:scale-105 active:scale-95"
+          className={`fixed z-40 bg-shopee hover:bg-shopee-dark text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition hover:scale-105 active:scale-95 ${cartWiggle ? 'animate-wiggle' : ''}`}
           style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))', right: 'calc(1.5rem + env(safe-area-inset-right, 0px))' }}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
