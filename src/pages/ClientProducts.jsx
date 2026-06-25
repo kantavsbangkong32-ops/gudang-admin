@@ -41,9 +41,9 @@ export default function ClientProducts() {
     if (!saved) return
     sessionStorage.removeItem('clientProductsScroll')
     const y = parseInt(saved, 10)
-    window.scrollTo(0, y)
-    const id = setTimeout(() => window.scrollTo(0, y), 300)
-    return () => clearTimeout(id)
+    const delays = [0, 100, 300, 600, 1000]
+    const timers = delays.map(d => setTimeout(() => window.scrollTo(0, y), d))
+    return () => timers.forEach(clearTimeout)
   }, [loading])
 
   async function fetchCartCount() {
