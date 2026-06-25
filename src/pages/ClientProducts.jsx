@@ -16,11 +16,30 @@ export default function ClientProducts() {
   const [categories, setCategories] = useState([])
   const [categorySearch, setCategorySearch] = useState('')
   const [adding, setAdding] = useState(null)
+  const [cartCount, setCartCount] = useState(0)
 
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => setCategories(data || []))
     loadProducts()
+    fetchCartCount()
   }, [])
+
+  async function fetchCartCount() {
+    if (!user) { setCartCount(0); return }
+    const { data: draft } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('client_id', user.id)
+      .eq('status', 'draft')
+      .maybeSingle()
+    if (!draft) { setCartCount(0); return }
+    const { data: items } = await supabase
+      .from('order_items')
+      .select('qty')
+      .eq('order_id', draft.id)
+    const count = (items || []).reduce((sum, i) => sum + i.qty, 0)
+    setCartCount(count)
+  }
 
   async function loadProducts() {
     setLoading(true)
@@ -86,6 +105,7 @@ export default function ClientProducts() {
     }
 
     setAdding(null)
+    fetchCartCount()
   }
 
   function parsePhotos(photoUrl) {
@@ -246,6 +266,19 @@ export default function ClientProducts() {
             )
           })}
         </div>
+      )}
+      {cartCount > 0 && (
+        <button
+          onClick={() => navigate('/client/cart')}
+          className="fixed bottom-6 right-6 z-40 bg-shopee hover:bg-shopee-dark text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition hover:scale-105 active:scale-95"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+            {cartCount > 99 ? '99+' : cartCount}
+          </span>
+        </button>
       )}
     </div>
   )

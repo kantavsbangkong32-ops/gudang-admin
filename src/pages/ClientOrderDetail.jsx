@@ -38,7 +38,7 @@ export default function ClientOrderDetail() {
           setOrder(orderData)
           const { data: orderItems } = await supabase
             .from('order_items')
-            .select('*, items(*, categories(name))')
+            .select('*, items(name, kode_item)')
             .eq('order_id', orderData.id)
           setItems(orderItems || [])
         }
@@ -65,27 +65,17 @@ export default function ClientOrderDetail() {
       setOrder(orderData)
       const { data: orderItems } = await supabase
         .from('order_items')
-        .select('*, items(*, categories(name))')
+        .select('*, items(name, kode_item)')
         .eq('order_id', orderData.id)
       setItems(orderItems || [])
     }
-  }
-
-  function formatPrice(price) {
-    return 'Rp ' + (price || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
   }
 
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
-  function parsePhotos(photoUrl) {
-    if (!photoUrl) return []
-    try { const p = JSON.parse(photoUrl); return Array.isArray(p) ? p : [photoUrl] }
-    catch { return [photoUrl] }
-  }
-
-  const total = items.reduce((sum, i) => sum + (i.price_at_order || 0) * i.qty, 0)
+  const totalItems = items.reduce((sum, i) => sum + i.qty, 0)
 
   if (loading) {
     return (
@@ -115,58 +105,46 @@ export default function ClientOrderDetail() {
         Kembali
       </button>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Detail Pesanan</h1>
-            <p className="text-xs text-gray-400 mt-1">ID: {order.id}</p>
-          </div>
-          <span className={`text-sm font-medium px-3 py-1.5 rounded-full border ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-lg font-bold text-gray-800">Detail Pesanan</h1>
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
             {statusLabels[order.status] || order.status}
           </span>
         </div>
 
-        <p className="text-sm text-gray-500 mb-6">Dibuat: {formatDate(order.created_at)}</p>
+        <p className="text-xs text-gray-400 mb-1">ID: {order.id}</p>
+        <p className="text-xs text-gray-400 mb-4">{formatDate(order.created_at)}</p>
 
         <div className="divide-y divide-gray-100">
-          {items.map((item) => {
-            const photos = parsePhotos(item.items?.photo_url)
-            return (
-              <div key={item.id} className="flex items-center gap-4 py-4">
-                <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
-                  {photos.length > 0 ? (
-                    <img src={photos[0]} alt={item.items?.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
+          {items.map((item) => (
+            <div key={item.id} className="py-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-800">{item.items?.name}</p>
+                  {item.items?.kode_item && (
+                    <p className="text-[11px] text-gray-400 mt-0.5">{item.items.kode_item}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 text-sm">{item.items?.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{item.items?.categories?.name}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-500">{item.qty} x {formatPrice(item.price_at_order)}</p>
-                  <p className="font-semibold text-gray-800 text-sm">{formatPrice(item.price_at_order * item.qty)}</p>
-                </div>
+                <span className="text-sm text-gray-500 shrink-0 ml-2">× {item.qty}</span>
               </div>
-            )
-          })}
+              {item.notes && (
+                <p className="text-xs text-gray-400 mt-1 italic">{item.notes}</p>
+              )}
+            </div>
+          ))}
         </div>
 
-        <div className="border-t border-gray-100 pt-4 mt-2 flex items-center justify-between">
-          <span className="font-semibold text-gray-800">Total</span>
-          <span className="text-xl font-bold text-shopee">{formatPrice(total)}</span>
+        <div className="border-t border-gray-100 pt-3 mt-1 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-800">Total</span>
+          <span className="text-sm text-gray-600">{totalItems} item</span>
         </div>
 
         {order.status === 'pending' && (
           <button
             onClick={cancelOrder}
             disabled={cancelling}
-            className="mt-6 w-full px-4 py-2.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition text-sm font-medium disabled:opacity-50"
+            className="mt-5 w-full px-4 py-2.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition text-sm font-medium disabled:opacity-50"
           >
             {cancelling ? 'Membatalkan...' : 'Batalkan Pesanan'}
           </button>

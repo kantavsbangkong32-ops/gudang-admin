@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
   item_id UUID REFERENCES items(id),
   qty INT DEFAULT 1,
-  price_at_order BIGINT DEFAULT 0
+  price_at_order BIGINT DEFAULT 0,
+  notes TEXT
 );
 
 -- 6. TABEL STOCK IMPORT LOGS (history import CSV)
