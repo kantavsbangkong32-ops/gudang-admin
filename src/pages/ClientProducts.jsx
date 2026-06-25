@@ -236,7 +236,7 @@ export default function ClientProducts() {
           {filtered.map((product) => {
             const photos = parsePhotos(product.photo_url)
             return (
-              <div key={product.id} className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5 group flex flex-col">
+              <div key={product.id} onClick={() => { saveState(); navigate(`/client/products/${product.id}`) }} className="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5 group flex flex-col cursor-pointer">
                 <div className="relative bg-gray-50">
                   {photos.length > 0 ? (
                     <img src={photos[0]} alt={product.name} className="w-full aspect-square object-cover" />
@@ -270,7 +270,7 @@ export default function ClientProducts() {
                     </div>
                   </div>
                   <button
-                    onClick={() => { setQtyDialog(product); setQtyValue(1) }}
+                    onClick={(e) => { e.stopPropagation(); setQtyDialog(product); setQtyValue(1) }}
                     disabled={adding === product.id || product.stock <= 0}
                     className="w-full bg-shopee hover:bg-shopee-dark disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-lg transition mt-1"
                   >

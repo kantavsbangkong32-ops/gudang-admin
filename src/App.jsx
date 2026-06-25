@@ -16,6 +16,7 @@ import ClientProducts from './pages/ClientProducts'
 import ClientCart from './pages/ClientCart'
 import ClientOrders from './pages/ClientOrders'
 import ClientOrderDetail from './pages/ClientOrderDetail'
+import ClientProductDetail from './pages/ClientProductDetail'
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
           </Route>
           <Route element={<CatalogProvider><ClientLayout /></CatalogProvider>}>
             <Route path="/client/products" element={<ClientProducts />} />
+            <Route path="/client/products/:id" element={<ClientProductDetail />} />
             <Route path="/client/cart" element={<ClientCart />} />
             <Route path="/client/orders" element={<ClientOrders />} />
             <Route path="/client/orders/:id" element={<ClientOrderDetail />} />
