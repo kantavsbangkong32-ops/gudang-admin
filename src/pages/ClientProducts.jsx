@@ -18,6 +18,8 @@ export default function ClientProducts() {
   const [adding, setAdding] = useState(null)
   const [cartCount, setCartCount] = useState(0)
   const [cartWiggle, setCartWiggle] = useState(false)
+  const [qtyDialog, setQtyDialog] = useState(null)
+  const [qtyValue, setQtyValue] = useState(1)
 
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => setCategories(data || []))
@@ -61,9 +63,10 @@ export default function ClientProducts() {
     setLoading(false)
   }
 
-  async function addToCart(item) {
+  async function addToCart(item, qty = 1) {
     if (!user) { navigate('/login'); return }
     setAdding(item.id)
+    setQtyDialog(null)
 
     let { data: draft, error: draftError } = await supabase
       .from('orders')
@@ -96,12 +99,12 @@ export default function ClientProducts() {
     if (existing) {
       await supabase
         .from('order_items')
-        .update({ qty: existing.qty + 1 })
+        .update({ qty: existing.qty + qty })
         .eq('id', existing.id)
     } else {
       const { error: insertError } = await supabase
         .from('order_items')
-        .insert({ order_id: draft.id, item_id: item.id, qty: 1, price_at_order: item.price })
+        .insert({ order_id: draft.id, item_id: item.id, qty, price_at_order: item.price })
       if (insertError) { setAdding(null); return }
     }
 
@@ -254,7 +257,7 @@ export default function ClientProducts() {
                     </div>
                   </div>
                   <button
-                    onClick={() => addToCart(product)}
+                    onClick={() => { setQtyDialog(product); setQtyValue(1) }}
                     disabled={adding === product.id || product.stock <= 0}
                     className="w-full bg-shopee hover:bg-shopee-dark disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-lg transition mt-1"
                   >
@@ -283,6 +286,39 @@ export default function ClientProducts() {
             {cartCount > 99 ? '99+' : cartCount}
           </span>
         </button>
+      )}
+      {qtyDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setQtyDialog(null)}>
+          <div className="bg-white rounded-xl p-5 w-full max-w-xs shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-gray-800 text-sm mb-1">{qtyDialog.name}</p>
+            <p className="text-xs text-gray-400 mb-4">Stok: {qtyDialog.stock}</p>
+            <div className="flex items-center justify-center gap-3 mb-5">
+              <button onClick={() => setQtyValue(Math.max(1, qtyValue - 1))}
+                disabled={qtyValue <= 1}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 text-lg font-medium">
+                -
+              </button>
+              <input type="number" min="1" max={qtyDialog.stock || 999} value={qtyValue}
+                onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v) && v >= 1) setQtyValue(Math.min(v, qtyDialog.stock || 999)) }}
+                className="w-16 text-center text-sm border border-gray-200 rounded-lg py-1.5 focus:outline-none focus:border-shopee" />
+              <button onClick={() => setQtyValue(Math.min(qtyDialog.stock || 999, qtyValue + 1))}
+                disabled={qtyValue >= (qtyDialog.stock || 999)}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 text-lg font-medium">
+                +
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setQtyDialog(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-gray-600 text-sm font-medium hover:bg-gray-50 transition">
+                Batal
+              </button>
+              <button onClick={() => addToCart(qtyDialog, qtyValue)}
+                className="flex-1 px-4 py-2.5 bg-shopee hover:bg-shopee-dark text-white rounded-lg text-sm font-medium transition">
+                Tambah
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
