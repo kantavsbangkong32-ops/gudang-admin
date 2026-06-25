@@ -10,10 +10,16 @@ export default function ProductDetail() {
   const [photos, setPhotos] = useState([])
   const [currentPhoto, setCurrentPhoto] = useState(0)
   const [showFullImage, setShowFullImage] = useState(false)
-  const [storeName, setStoreName] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [categories, setCategories] = useState([])
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     async function load() {
+      const { data: cats } = await supabase.from('categories').select('*')
+      setCategories(cats || [])
+
       const { data, error } = await supabase
         .from('items')
         .select('*, categories(name)')
@@ -24,15 +30,47 @@ export default function ProductDetail() {
         const parsed = parsePhotos(data.photo_url)
         setPhotos(parsed)
         setCurrentPhoto(0)
-        if (data.created_by) {
-          const { data: profile } = await supabase.from('profiles').select('username').eq('id', data.created_by).single()
-          if (profile) setStoreName(profile.username)
-        }
       }
       setLoading(false)
     }
     load()
   }, [id])
+
+  function startEditing() {
+    setEditForm({
+      name: product.name,
+      price: product.price,
+      supplier: product.supplier || '',
+      kode_item: product.kode_item || '',
+      category_id: product.category_id || '',
+      stock: product.stock ?? 0,
+    })
+    setIsEditing(true)
+  }
+
+  function cancelEditing() {
+    setIsEditing(false)
+    setEditForm({})
+  }
+
+  async function saveEditing() {
+    setSaving(true)
+    const payload = {
+      name: editForm.name,
+      price: parseInt(editForm.price) || 0,
+      supplier: editForm.supplier || null,
+      kode_item: editForm.kode_item || null,
+      status: editForm.status,
+      category_id: editForm.category_id || null,
+      stock: parseInt(editForm.stock) || 0,
+    }
+    const { error } = await supabase.from('items').update(payload).eq('id', id)
+    if (!error) {
+      setProduct({ ...product, ...payload })
+      setIsEditing(false)
+    }
+    setSaving(false)
+  }
 
   function parsePhotos(photoUrl) {
     if (!photoUrl) return []
@@ -150,83 +188,153 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <div className="flex items-center gap-6 mt-4 pt-3 border-t border-gray-100" style={{ height: 60 }}>
-                <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  Bagikan
-                </button>
-                <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  Favorit
-                </button>
-              </div>
             </div>
 
             <div>
               <div className="flex items-start justify-between gap-3 mb-4">
-                <h1 className="text-[32px] font-bold text-gray-800 leading-tight line-clamp-2">
-                  {product.name}
-                </h1>
+                {isEditing ? (
+                  <input type="text" value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="text-[32px] font-bold text-gray-800 leading-tight w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none" />
+                ) : (
+                  <h1 className="text-[32px] font-bold text-gray-800 leading-tight line-clamp-2">
+                    {product.name}
+                  </h1>
+                )}
               </div>
 
-              <div className="bg-[#f5f5f5] p-4 flex items-center h-20" style={{ borderRadius: 4 }}>
-                <p className="text-[40px] font-bold text-blue-600 leading-none">
-                  Rp {Number(product.price).toLocaleString('id-ID')}
-                </p>
-              </div>
+              {isEditing ? (
+                <div className="bg-[#f5f5f5] p-4 rounded" style={{ borderRadius: 4 }}>
+                  <label className="text-xs text-gray-400 mb-1 block">Harga</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg text-gray-400 font-bold">Rp</span>
+                    <input type="number" value={editForm.price}
+                      onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                      className="w-full pl-12 pr-4 py-2 text-[32px] font-bold text-blue-600 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none" min="0" />
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[#f5f5f5] p-4 flex items-center h-20" style={{ borderRadius: 4 }}>
+                  <p className="text-[40px] font-bold text-blue-600 leading-none">
+                    Rp {Number(product.price).toLocaleString('id-ID')}
+                  </p>
+                </div>
+              )}
 
               <div className="mt-5 space-y-4">
-                {product.supplier && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                {isEditing ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-400">Supplier</p>
+                        <input type="text" value={editForm.supplier}
+                          onChange={(e) => setEditForm({ ...editForm, supplier: e.target.value })}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none" />
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-400">Supplier</p>
-                      <p className="text-sm font-medium text-gray-700">{product.supplier}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-400">Kode Item</p>
+                        <input type="text" value={editForm.kode_item}
+                          onChange={(e) => setEditForm({ ...editForm, kode_item: e.target.value })}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none" />
+                      </div>
                     </div>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-400">Kategori</p>
+                        <select value={editForm.category_id}
+                          onChange={(e) => setEditForm({ ...editForm, category_id: e.target.value })}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none">
+                          <option value="">Pilih kategori</option>
+                          {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-400">Stok</p>
+                        <input type="number" value={editForm.stock}
+                          onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none" min="0" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {product.supplier && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Supplier</p>
+                          <p className="text-sm font-medium text-gray-700">{product.supplier}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Kode Item</p>
+                        <p className="text-base font-bold text-gray-800">{product.kode_item || '-'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Stok</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-base font-bold text-gray-800">{product.stock ?? 0}</p>
+                          <button onClick={async () => {
+                            const newVal = !product.is_terbaru
+                            const payload = { is_terbaru: newVal }
+                            if (newVal) payload.stock_updated_at = new Date().toISOString()
+                            const { error } = await supabase.from('items').update(payload).eq('id', product.id)
+                            if (!error) setProduct({ ...product, ...payload })
+                          }}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer transition ${
+                              product.is_terbaru ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                            }`}>
+                            {product.is_terbaru ? '★ Terbaru' : '☆ Terbaru'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Kode Item</p>
-                    <p className="text-base font-bold text-gray-800">{product.kode_item || '-'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Stok</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-base font-bold text-gray-800">{product.stock ?? 0}</p>
-                      <button onClick={async () => {
-                        const newVal = !product.is_terbaru
-                        const { error } = await supabase.from('items').update({ is_terbaru: newVal }).eq('id', product.id)
-                        if (!error) setProduct({ ...product, is_terbaru: newVal })
-                      }}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer transition ${
-                          product.is_terbaru ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-                        }`}>
-                        {product.is_terbaru ? '★ Terbaru' : '☆ Terbaru'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
                     <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,31 +364,35 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <div className="bg-white p-5 mt-5 flex items-center gap-5" style={{ borderRadius: 4 }}>
-          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-300 overflow-hidden shrink-0">
-            {storeName ? (
-              <span className="text-xl font-bold text-gray-500">{storeName.charAt(0).toUpperCase()}</span>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            )}
-          </div>
-          <div>
-            <p className="text-base font-semibold text-gray-800">{storeName || 'Toko'}</p>
-            <p className="text-xs text-gray-400">Admin</p>
-          </div>
-        </div>
-
         <div className="flex items-center justify-center gap-3 mt-6 mb-8">
-          <button onClick={() => navigate(`/products/edit/${product.id}`)}
-            className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition" style={{ borderRadius: 2 }}>
-            Edit Produk
-          </button>
-          <button onClick={deleteProduct}
-            className="px-6 py-2.5 border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition" style={{ borderRadius: 2 }}>
-            Hapus
-          </button>
+          {isEditing ? (
+            <>
+              <button onClick={saveEditing} disabled={saving}
+                className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50" style={{ borderRadius: 2 }}>
+                {saving ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Menyimpan...
+                  </span>
+                ) : 'Simpan'}
+              </button>
+              <button onClick={cancelEditing}
+                className="px-6 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" style={{ borderRadius: 2 }}>
+                Batal
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={startEditing}
+                className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition" style={{ borderRadius: 2 }}>
+                Edit Produk
+              </button>
+              <button onClick={deleteProduct}
+                className="px-6 py-2.5 border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition" style={{ borderRadius: 2 }}>
+                Hapus
+              </button>
+            </>
+          )}
           <button onClick={() => navigate('/products')}
             className="px-6 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition" style={{ borderRadius: 2 }}>
             Kembali

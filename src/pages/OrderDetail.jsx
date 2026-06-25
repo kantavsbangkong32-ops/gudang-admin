@@ -46,6 +46,15 @@ export default function OrderDetail() {
   }
 
   async function updateStatus(newStatus) {
+    if (newStatus === 'completed') {
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('item_id, qty')
+        .eq('order_id', id)
+      for (const item of orderItems || []) {
+        await supabase.rpc('decrement_stock', { p_item_id: item.item_id, p_qty: item.qty })
+      }
+    }
     const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', id)
     if (!error) loadOrder()
   }

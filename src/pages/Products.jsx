@@ -6,15 +6,33 @@ export default function Products() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [filterTerbaru, setFilterTerbaru] = useState(false)
+  const [filterTanpaFoto, setFilterTanpaFoto] = useState(false)
+  const [filterStok, setFilterStok] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [categories, setCategories] = useState([])
+  const [categorySearch, setCategorySearch] = useState('')
 
-  useEffect(() => { loadProducts() }, [])
+  useEffect(() => {
+    supabase.from('categories').select('*').then(({ data }) => setCategories(data || []))
+    loadProducts()
+  }, [])
 
   async function loadProducts() {
     setLoading(true)
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    await supabase
+      .from('items')
+      .update({ is_terbaru: false })
+      .eq('is_terbaru', true)
+      .lt('stock_updated_at', sevenDaysAgo)
+
     const { data, error } = await supabase
       .from('items')
       .select('*, categories(name)')
-      .order('created_at', { ascending: false })
+      .order('is_terbaru', { ascending: false })
+      .order('stock_updated_at', { ascending: false, nulls: 'last' })
     if (!error) setProducts(data || [])
     setLoading(false)
   }
@@ -42,15 +60,25 @@ export default function Products() {
     e.preventDefault()
     e.stopPropagation()
     const newVal = !currentVal
-    const { error } = await supabase.from('items').update({ is_terbaru: newVal }).eq('id', id)
+    const payload = { is_terbaru: newVal }
+    if (newVal) payload.stock_updated_at = new Date().toISOString()
+    const { error } = await supabase.from('items').update(payload).eq('id', id)
     if (!error) {
-      setProducts(products.map((p) => p.id === id ? { ...p, is_terbaru: newVal } : p))
+      setProducts(products.map((p) => p.id === id ? { ...p, ...payload } : p))
     }
   }
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = products.filter((p) => {
+    const q = search.toLowerCase()
+    if (!p.name.toLowerCase().includes(q) && !(p.kode_item || '').toLowerCase().includes(q)) return false
+    if (filterTerbaru && !p.is_terbaru) return false
+    if (filterTanpaFoto && p.photo_url) return false
+    if (filterStok === 'habis' && p.stock > 0) return false
+    if (filterStok === 'rendah' && (p.stock > 10 || p.stock <= 0)) return false
+    if (filterStok === 'tersedia' && (!p.stock || p.stock <= 0)) return false
+    if (filterCategory && p.category_id !== filterCategory) return false
+    return true
+  })
 
   return (
     <div>
@@ -70,7 +98,7 @@ export default function Products() {
         </Link>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 space-y-3">
         <div className="relative max-w-md">
           <svg className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -82,6 +110,55 @@ export default function Products() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 transition text-sm"
           />
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => setFilterTerbaru(!filterTerbaru)}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+              filterTerbaru ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}>
+            ★ Terbaru
+          </button>
+          <div className="flex items-center gap-1">
+            {['habis', 'rendah', 'tersedia'].map((s) => (
+              <button key={s} onClick={() => setFilterStok(filterStok === s ? '' : s)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                  filterStok === s ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                }`}>
+                Stok {s === 'habis' ? 'Habis' : s === 'rendah' ? 'Rendah' : 'Tersedia'}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setFilterTanpaFoto(!filterTanpaFoto)}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+              filterTanpaFoto ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}>
+            Tanpa Foto
+          </button>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <svg className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="Cari kategori..." value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-xs font-semibold rounded-full border border-gray-200 bg-white text-gray-600 focus:outline-none focus:border-blue-400 w-40" />
+          </div>
+          <button onClick={() => { setFilterCategory(''); setCategorySearch('') }}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+              !filterCategory ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}>
+            Semua Kategori
+          </button>
+          {categories
+            .filter((cat) => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+            .map((cat) => (
+              <button key={cat.id} onClick={() => setFilterCategory(filterCategory === cat.id ? '' : cat.id)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+                  filterCategory === cat.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                }`}>
+                {cat.name}
+              </button>
+            ))}
         </div>
       </div>
 
@@ -113,20 +190,13 @@ export default function Products() {
                     </svg>
                   </div>
                 )}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                <div className="absolute top-2 left-2">
                   <button onClick={(e) => toggleTerbaru(product.id, product.is_terbaru, e)}
                     className={`text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border border-white/50 cursor-pointer transition ${
-                      product.is_terbaru ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                      product.is_terbaru ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                     }`}>
                     {product.is_terbaru ? '★ Terbaru' : '☆ Terbaru'}
                   </button>
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full shadow-sm border border-white/50 ${
-                    product.status === 'ready' ? 'bg-green-500 text-white' :
-                    product.status === 'not_ready' ? 'bg-red-500 text-white' :
-                    'bg-gray-500 text-white'
-                  }`}>
-                    {product.status === 'not_ready' ? 'Not Ready' : product.status || 'ready'}
-                  </span>
                 </div>
                 <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.preventDefault()}>
                   <Link to={`/products/edit/${product.id}`}

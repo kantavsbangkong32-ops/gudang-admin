@@ -19,7 +19,7 @@ export default function Login() {
       if (profileData?.role?.toUpperCase() === 'ADMIN') {
         navigate('/dashboard', { replace: true })
       } else {
-        setError('Akun ini bukan Admin. Hanya admin yang bisa mengakses panel ini.')
+        navigate('/client/products', { replace: true })
       }
     } catch (err) {
       setError(err.message || 'Login gagal. Periksa email dan password.')

@@ -8,7 +8,7 @@ export default function ProductForm() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    name: '', price: '', status: 'ready', category_id: '', supplier: '', kode_item: '',
+    name: '', price: '', category_id: '', supplier: '', kode_item: '',
   })
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -220,21 +220,6 @@ export default function ProductForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">No. Barcode</label>
             <input type="text" value={form.kode_item} onChange={(e) => handleChange('kode_item', e.target.value)}
               className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 outline-none transition text-sm" placeholder="Contoh: 8991234567890" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
-            <div className="flex gap-3 h-[42px] items-center">
-              {['ready', 'not_ready'].map((s) => (
-                <button key={s} type="button" onClick={() => handleChange('status', s)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                    form.status === s
-                      ? s === 'ready' ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}>
-                  {s === 'ready' ? '✓ Ready' : '✕ Not Ready'}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 

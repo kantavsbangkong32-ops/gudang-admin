@@ -13,26 +13,28 @@ CREATE TABLE IF NOT EXISTS categories (
 -- 2. TABEL PROFILES (auto-create via trigger after user signup)
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users PRIMARY KEY,
-  username TEXT,
-  full_name TEXT,
-  role TEXT DEFAULT 'USER',
-  created_at TIMESTAMPTZ DEFAULT now()
+  username TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'client',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  auth_email TEXT
 );
 
 -- 3. TABEL ITEMS (produk)
 CREATE TABLE IF NOT EXISTS items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
-  price BIGINT DEFAULT 0,
-  status TEXT DEFAULT 'ready',
+  price BIGINT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'ready',
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-  supplier TEXT,
+  supplier TEXT NOT NULL,
   kode_item TEXT,
   stock INT DEFAULT 0,
   photo_url TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  stock_updated_at TIMESTAMPTZ,
+  is_terbaru BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE INDEX IF NOT EXISTS idx_items_kode_item ON items(kode_item);
@@ -40,9 +42,10 @@ CREATE INDEX IF NOT EXISTS idx_items_kode_item ON items(kode_item);
 -- 4. TABEL ORDERS
 CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  status TEXT DEFAULT 'PENDING',
+  client_id UUID NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'rejected', 'draft')),
+  approved_by UUID,
   notes TEXT,
-  profile_id UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -82,8 +85,8 @@ ALTER TABLE stock_import_logs ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username, full_name, role)
-  VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name', 'USER');
+  INSERT INTO public.profiles (id, username, role)
+  VALUES (new.id, new.email, 'client');
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

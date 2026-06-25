@@ -171,8 +171,6 @@ function SyncTab({ fileInputRef, onReset }) {
         const payload = { name: r.name }
         if (r.stok !== r.match.stock) {
           payload.stock = r.stok
-          payload.stock_updated_at = new Date().toISOString()
-          payload.is_terbaru = true
         }
         const { error } = await supabase.from('items').update(payload).eq('id', r.match.id)
         if (error) errors++; else updated++
@@ -193,9 +191,6 @@ function SyncTab({ fileInputRef, onReset }) {
           price: 0,
           supplier: '',
           stock: r.stok,
-          status: 'ready',
-          stock_updated_at: new Date().toISOString(),
-          is_terbaru: true,
         })
         if (error) { createErrors++; console.error('Insert error', r.kode_item, JSON.stringify(error)) } else created++
       })
@@ -496,6 +491,225 @@ function RiwayatTab() {
   )
 }
 
+function parseBarcodes(text) {
+  const sep = detectSeparator(text)
+  const lines = text.trim().split('\n')
+
+  // Cari baris header yang mengandung kolom kode item/barcode
+  let headerIdx = -1
+  let kodeCol = 0
+  for (let i = 0; i < lines.length; i++) {
+    const lower = lines[i].toLowerCase()
+    if (lower.includes('kd. item') || lower.includes('kd item')) { headerIdx = i; kodeCol = 1; break }
+    if (lower.includes('kode item') || lower.includes('kode_item')) { headerIdx = i; kodeCol = 0; break }
+  }
+
+  const barcodes = new Set()
+  const start = headerIdx !== -1 ? headerIdx + 1 : 0
+
+  for (let i = start; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i], sep)
+    const val = cols[kodeCol] || ''
+    if (!val) continue
+    const lower = val.toLowerCase()
+    if (lower.includes('total') || lower.includes('sub total') || lower.includes('pot.') || lower.includes('pajak') || lower.includes('biaya') || lower.includes('no.')) continue
+    if (/^\d/.test(val)) barcodes.add(val)
+  }
+
+  return Array.from(barcodes)
+}
+
+function TerbaruTab() {
+  const { user } = useAuth()
+  const [step, setStep] = useState('upload')
+  const [rows, setRows] = useState([])
+  const [syncing, setSyncing] = useState(false)
+  const [statusText, setStatusText] = useState('')
+  const [result, setResult] = useState(null)
+  const [uploadedFile, setUploadedFile] = useState(null)
+  const innerFileRef = useRef(null)
+
+  function reset() {
+    setRows([])
+    setResult(null)
+    setStep('upload')
+    setUploadedFile(null)
+    setSyncing(false)
+    setStatusText('')
+    if (innerFileRef.current) innerFileRef.current.value = ''
+  }
+
+  async function handleFile(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setStatusText('Membaca file...')
+    setStep('parsing')
+    const text = await file.text()
+    const barcodes = parseBarcodes(text)
+    if (barcodes.length === 0) {
+      setStatusText('Tidak ditemukan barcode di file. Periksa format CSV.')
+      setStep('upload')
+      return
+    }
+    setRows(barcodes.map(k => ({ kode_item: k })))
+    setUploadedFile(file)
+    setStep('preview')
+    setStatusText('')
+  }
+
+  async function markTerbaru() {
+    setSyncing(true)
+    setStatusText('Mencocokkan barcode...')
+    const kodeList = rows.map(r => r.kode_item).filter(Boolean)
+    if (kodeList.length === 0) { setSyncing(false); return }
+
+    const { data: items } = await supabase
+      .from('items')
+      .select('id, kode_item')
+      .in('kode_item', kodeList)
+
+    const matchMap = {}
+    if (items) items.forEach(item => { matchMap[item.kode_item] = item })
+
+    const matched = rows.filter(r => matchMap[r.kode_item])
+    const unmatched = rows.filter(r => !matchMap[r.kode_item])
+
+    setStatusText('Menandai barang terbaru...')
+    let updated = 0
+    await Promise.all(
+      matched.map(async (r) => {
+        const { error } = await supabase
+          .from('items')
+          .update({ is_terbaru: true, stock_updated_at: new Date().toISOString() })
+          .eq('id', matchMap[r.kode_item].id)
+        if (!error) updated++
+      })
+    )
+
+    setStatusText('Menyimpan log...')
+    await supabase.from('stock_import_logs').insert({
+      filename: uploadedFile?.name || 'unknown.csv',
+      total_rows: rows.length,
+      matched: matched.length,
+      unmatched: unmatched.length,
+      updated_items: updated,
+      unmatched_kodes: JSON.stringify(unmatched.map(r => ({ kode_item: r.kode_item }))),
+      user_id: user?.id || null,
+    })
+
+    setResult({ total: rows.length, matched: matched.length, updated, unmatched: unmatched.length })
+    setStep('result')
+    setSyncing(false)
+    setStatusText('')
+  }
+
+  if (step === 'upload' || step === 'parsing') {
+    return (
+      <div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition"
+            onClick={() => innerFileRef.current?.click()}>
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-base font-medium text-gray-600 mb-1">
+              {step === 'parsing' ? statusText : 'Klik untuk upload file CSV'}
+            </p>
+            {step === 'parsing' && (
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mt-3"></div>
+            )}
+            <p className="text-sm text-gray-400 mt-1">Upload CSV (xReport IPOS 5, Mutasi Stok, atau list barcode)</p>
+            <p className="text-xs text-gray-400 mt-1">Hanya kode_item / barcode yang diekstrak. Tidak ada perubahan stok.</p>
+          </div>
+          <input ref={innerFileRef} type="file" accept=".csv,.txt,.tsv" className="hidden" onChange={handleFile} />
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'preview') {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-5 border-b border-gray-50 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">Preview Data</h2>
+            <p className="text-sm text-gray-400">{rows.length} baris dari <span className="font-medium">{uploadedFile?.name}</span></p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={reset} className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Batal</button>
+            <button onClick={markTerbaru} disabled={syncing}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2">
+              {syncing ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>{statusText}</>
+              ) : 'Tandai sebagai Terbaru'}
+            </button>
+          </div>
+        </div>
+        {syncing ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-3">{statusText}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+            <table className="w-full">
+              <thead className="sticky top-0 bg-gray-50">
+                <tr>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">No</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Kode Item / Barcode</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {rows.map((r, i) => (
+                  <tr key={i} className="hover:bg-gray-50/50 transition">
+                    <td className="px-5 py-2.5 text-sm text-gray-400">{i + 1}</td>
+                    <td className="px-5 py-2.5 text-sm font-mono text-gray-800">{r.kode_item}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (step === 'result') {
+    return (
+      <div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-5">
+          <div className="flex items-center gap-4 mb-5">
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-green-50">
+              <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">Barang Terbaru Selesai</h2>
+              <p className="text-sm text-gray-400">{uploadedFile?.name} • {new Date().toLocaleString('id-ID')}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <StatBox value={result.total} label="Total Barcode" color="gray" />
+            <StatBox value={result.updated} label="Ditandai Terbaru" color="green" />
+            <StatBox value={result.unmatched} label="Tidak Cocok" color={result.unmatched > 0 ? 'yellow' : 'gray'} />
+          </div>
+        </div>
+        <button onClick={reset}
+          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition">
+          Import Lagi
+        </button>
+      </div>
+    )
+  }
+
+  return null
+}
+
 function FilesTab() {
   const { user } = useAuth()
   const [files, setFiles] = useState([])
@@ -541,8 +755,6 @@ function FilesTab() {
           const payload = { name: r.name }
           if (r.stok !== matchMap[r.kode_item].stock) {
             payload.stock = r.stok
-            payload.stock_updated_at = new Date().toISOString()
-            payload.is_terbaru = true
           }
           const { error } = await supabase.from('items').update(payload).eq('id', matchMap[r.kode_item].id)
           if (error) errors++; else updated++
@@ -558,9 +770,6 @@ function FilesTab() {
             price: 0,
             supplier: '',
             stock: r.stok,
-            status: 'ready',
-            stock_updated_at: new Date().toISOString(),
-            is_terbaru: true,
           })
           if (!error) created++
         })
@@ -693,6 +902,7 @@ export default function StockImport() {
 
   const tabs = [
     { key: 'sync', label: 'Sync Stok', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
+    { key: 'terbaru', label: 'Barang Terbaru', icon: 'M5 13l4 4L19 7' },
     { key: 'history', label: 'Riwayat', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
     { key: 'files', label: 'File CSV', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
   ]
@@ -701,7 +911,7 @@ export default function StockImport() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Import Stok</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Upload file IPOS 5 untuk sinkronisasi stok produk</p>
+        <p className="text-sm text-gray-400 mt-0.5">Upload file IPOS 5 untuk sinkronisasi stok atau tandai barang terbaru</p>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -721,6 +931,7 @@ export default function StockImport() {
       </div>
 
       {tab === 'sync' && <SyncTab fileInputRef={fileInputRef} />}
+      {tab === 'terbaru' && <TerbaruTab />}
       {tab === 'history' && <RiwayatTab />}
       {tab === 'files' && <FilesTab />}
     </div>
