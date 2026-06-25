@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -28,18 +28,22 @@ export default function ClientProducts() {
   }, [])
 
   useEffect(() => {
-    if (!loading) {
-      const saved = sessionStorage.getItem('clientProductsScroll')
-      if (saved) {
-        window.scrollTo(0, parseInt(saved, 10))
-        sessionStorage.removeItem('clientProductsScroll')
-      }
+    function save() {
+      try { sessionStorage.setItem('clientProductsScroll', String(window.scrollY)) } catch {}
     }
-    return () => {
-      if (!loading) {
-        sessionStorage.setItem('clientProductsScroll', String(window.scrollY))
-      }
-    }
+    window.addEventListener('scroll', save, { passive: true })
+    return () => window.removeEventListener('scroll', save)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (loading) return
+    const saved = sessionStorage.getItem('clientProductsScroll')
+    if (!saved) return
+    sessionStorage.removeItem('clientProductsScroll')
+    const y = parseInt(saved, 10)
+    window.scrollTo(0, y)
+    const id = setTimeout(() => window.scrollTo(0, y), 300)
+    return () => clearTimeout(id)
   }, [loading])
 
   async function fetchCartCount() {
