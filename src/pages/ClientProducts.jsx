@@ -27,6 +27,19 @@ export default function ClientProducts() {
     fetchCartCount()
   }, [])
 
+  useEffect(() => {
+    const saved = sessionStorage.getItem('clientProductsScroll')
+    if (saved) {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, parseInt(saved, 10))
+      })
+      sessionStorage.removeItem('clientProductsScroll')
+    }
+    return () => {
+      sessionStorage.setItem('clientProductsScroll', String(window.scrollY))
+    }
+  }, [])
+
   async function fetchCartCount() {
     if (!user) { setCartCount(0); return }
     const { data: draft } = await supabase
