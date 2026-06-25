@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { CatalogProvider } from './context/CatalogContext'
 import Layout from './components/Layout'
 import ClientLayout from './components/ClientLayout'
 import Login from './pages/Login'
@@ -33,7 +34,7 @@ export default function App() {
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/stock-import" element={<StockImport />} />
           </Route>
-          <Route element={<ClientLayout />}>
+          <Route element={<CatalogProvider><ClientLayout /></CatalogProvider>}>
             <Route path="/client/products" element={<ClientProducts />} />
             <Route path="/client/cart" element={<ClientCart />} />
             <Route path="/client/orders" element={<ClientOrders />} />

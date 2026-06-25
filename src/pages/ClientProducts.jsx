@@ -2,17 +2,21 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useCatalog } from '../context/CatalogContext'
 
 export default function ClientProducts() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const {
+    search, setSearch,
+    filterTerbaru, setFilterTerbaru,
+    filterTanpaFoto, setFilterTanpaFoto,
+    filterStok, setFilterStok,
+    filterCategory, setFilterCategory,
+    savedScrollY, saveState, clearSavedState,
+  } = useCatalog()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [filterTerbaru, setFilterTerbaru] = useState(false)
-  const [filterTanpaFoto, setFilterTanpaFoto] = useState(false)
-  const [filterStok, setFilterStok] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
   const [categories, setCategories] = useState([])
   const [categorySearch, setCategorySearch] = useState('')
   const [adding, setAdding] = useState(null)
@@ -27,20 +31,10 @@ export default function ClientProducts() {
     fetchCartCount()
   }, [])
 
-  useEffect(() => {
-    function save() {
-      try { sessionStorage.setItem('clientProductsScroll', String(window.scrollY)) } catch {}
-    }
-    window.addEventListener('scroll', save, { passive: true })
-    return () => window.removeEventListener('scroll', save)
-  }, [])
-
   useLayoutEffect(() => {
-    if (loading) return
-    const saved = sessionStorage.getItem('clientProductsScroll')
-    if (!saved) return
-    sessionStorage.removeItem('clientProductsScroll')
-    const y = parseInt(saved, 10)
+    if (loading || savedScrollY == null) return
+    const y = savedScrollY
+    clearSavedState()
     const delays = [0, 100, 300, 600, 1000]
     const timers = delays.map(d => setTimeout(() => window.scrollTo(0, y), d))
     return () => timers.forEach(clearTimeout)
@@ -294,7 +288,7 @@ export default function ClientProducts() {
       )}
       {cartCount > 0 && (
         <button
-          onClick={() => navigate('/client/cart')}
+          onClick={() => { saveState(); navigate('/client/cart') }}
           className={`fixed z-40 bg-shopee hover:bg-shopee-dark text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition hover:scale-105 active:scale-95 ${cartWiggle ? 'animate-wiggle' : ''}`}
           style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))', right: 'calc(1.5rem + env(safe-area-inset-right, 0px))' }}
         >
