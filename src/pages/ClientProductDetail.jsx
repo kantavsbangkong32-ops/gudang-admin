@@ -2,13 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { useCatalog } from '../context/CatalogContext'
-
 export default function ClientProductDetail() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { saveState } = useCatalog()
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -108,7 +105,7 @@ export default function ClientProductDetail() {
   return (
     <div>
       <button
-        onClick={() => { saveState(); navigate('/client/products') }}
+        onClick={() => navigate('/client/products')}
         className="text-sm text-gray-400 hover:text-gray-600 mb-4 flex items-center gap-1"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
