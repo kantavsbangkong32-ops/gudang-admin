@@ -28,17 +28,19 @@ export default function ClientProducts() {
   }, [])
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('clientProductsScroll')
-    if (saved) {
-      requestAnimationFrame(() => {
+    if (!loading) {
+      const saved = sessionStorage.getItem('clientProductsScroll')
+      if (saved) {
         window.scrollTo(0, parseInt(saved, 10))
-      })
-      sessionStorage.removeItem('clientProductsScroll')
+        sessionStorage.removeItem('clientProductsScroll')
+      }
     }
     return () => {
-      sessionStorage.setItem('clientProductsScroll', String(window.scrollY))
+      if (!loading) {
+        sessionStorage.setItem('clientProductsScroll', String(window.scrollY))
+      }
     }
-  }, [])
+  }, [loading])
 
   async function fetchCartCount() {
     if (!user) { setCartCount(0); return }
