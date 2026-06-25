@@ -37,10 +37,9 @@ export default function ClientOrders() {
             data.map(async (order) => {
               const { data: orderItems } = await supabase
                 .from('order_items')
-                .select('qty, price_at_order, items(name)')
+                .select('qty, items(name)')
                 .eq('order_id', order.id)
-              const total = (orderItems || []).reduce((sum, i) => sum + (i.price_at_order || 0) * i.qty, 0)
-              return { ...order, items: orderItems || [], total, item_count: orderItems?.length || 0 }
+              return { ...order, items: orderItems || [], item_count: orderItems?.length || 0 }
             })
           )
           setOrders(enriched)
@@ -48,10 +47,6 @@ export default function ClientOrders() {
         setLoading(false)
       })
   }, [])
-
-  function formatPrice(price) {
-    return 'Rp ' + (price || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  }
 
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -91,23 +86,18 @@ export default function ClientOrders() {
           <Link
             key={order.id}
             to={`/client/orders/${order.id}`}
-            className="block bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition"
+            className="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:shadow-md transition"
           >
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-400">{formatDate(order.created_at)}</span>
               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
                 {statusLabels[order.status] || order.status}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{order.item_count} item</p>
-                <p className="text-sm text-gray-400 truncate max-w-xs mt-0.5">
-                  {order.items.map((i) => i.items?.name).join(', ')}
-                </p>
-              </div>
-              <p className="font-bold text-gray-800">{formatPrice(order.total)}</p>
-            </div>
+            <p className="text-sm font-semibold text-gray-700">{order.item_count} item</p>
+            <p className="text-xs text-gray-400 truncate mt-1">
+              {order.items.map((i) => i.items?.name).join(', ')}
+            </p>
           </Link>
         ))}
       </div>
