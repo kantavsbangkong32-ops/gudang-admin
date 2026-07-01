@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-shopee: #2563eb;
-  --color-shopee-dark: #1d4ed8;
-  --color-shopee-light: #eff6ff;
-  --color-shopee-bg: #f5f5f5;
+  --color-shopee: #AA1825;
+  --color-shopee-dark: #7F1D1D;
+  --color-shopee-light: #F3D4D6;
+  --color-shopee-bg: #F9F9FA;
+  --color-mustard: #FACC15;
 }
 
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background-color: #f5f5f5;
+  background-color: #F9F9FA;
 }
 
 @keyframes wiggle {

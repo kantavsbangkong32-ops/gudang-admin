@@ -72,16 +72,16 @@ function StatusBadge({ label, type }) {
     success: 'bg-green-100 text-green-700 border-green-200',
     warning: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     error: 'bg-red-100 text-red-700 border-red-200',
-    info: 'bg-blue-100 text-blue-700 border-blue-200',
+    info: 'bg-shopee-light text-shopee-dark border-shopee-light',
   }
   return <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${styles[type] || styles.info}`}>{label}</span>
 }
 
 function StatBox({ value, label, color }) {
   return (
-    <div className={`rounded-lg p-4 text-center ${color === 'green' ? 'bg-green-50' : color === 'red' ? 'bg-red-50' : color === 'yellow' ? 'bg-yellow-50' : color === 'blue' ? 'bg-blue-50' : 'bg-gray-50'}`}>
-      <p className={`text-2xl font-bold ${color === 'green' ? 'text-green-600' : color === 'red' ? 'text-red-500' : color === 'yellow' ? 'text-yellow-500' : color === 'blue' ? 'text-blue-600' : 'text-gray-800'}`}>{value}</p>
-      <p className={`text-xs mt-1 ${color === 'green' ? 'text-green-500' : color === 'red' ? 'text-red-400' : color === 'blue' ? 'text-blue-500' : 'text-gray-400'}`}>{label}</p>
+    <div className={`rounded-lg p-4 text-center ${color === 'green' ? 'bg-green-50' : color === 'red' ? 'bg-red-50' : color === 'yellow' ? 'bg-yellow-50' : color === 'blue' ? 'bg-shopee-light' : 'bg-gray-50'}`}>
+      <p className={`text-2xl font-bold ${color === 'green' ? 'text-green-600' : color === 'red' ? 'text-red-500' : color === 'yellow' ? 'text-yellow-500' : color === 'blue' ? 'text-shopee' : 'text-gray-800'}`}>{value}</p>
+      <p className={`text-xs mt-1 ${color === 'green' ? 'text-green-500' : color === 'red' ? 'text-red-400' : color === 'blue' ? 'text-shopee' : 'text-gray-400'}`}>{label}</p>
     </div>
   )
 }
@@ -189,7 +189,6 @@ function SyncTab({ fileInputRef, onReset }) {
           kode_item: r.kode_item,
           name: r.name || 'Produk Baru',
           price: 0,
-          supplier: '',
           stock: r.stok,
         })
         if (error) { createErrors++; console.error('Insert error', r.kode_item, JSON.stringify(error)) } else created++
@@ -222,11 +221,11 @@ function SyncTab({ fileInputRef, onReset }) {
       <div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
           <div
-            className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition"
+            className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-shopee hover:bg-shopee-light/30 transition"
             onClick={() => innerFileRef.current?.click()}
           >
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-shopee-light rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-shopee" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
@@ -234,12 +233,12 @@ function SyncTab({ fileInputRef, onReset }) {
               {step === 'parsing' ? statusText : 'Klik untuk upload file CSV'}
             </p>
             {step === 'parsing' && (
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mt-3"></div>
+              <div className="w-8 h-8 border-4 border-shopee border-t-transparent rounded-full animate-spin mx-auto mt-3"></div>
             )}
             <p className="text-sm text-gray-400 mt-1">Format: Laporan Mutasi Stok IPOS 5 (CSV)</p>
             <div className="mt-4 inline-block bg-gray-50 rounded-lg px-4 py-2 text-left text-xs text-gray-500">
               <p className="font-medium mb-1">Kolom yang dideteksi otomatis:</p>
-              <p><span className="text-blue-600">Kode Item</span> → Nama Item → ... → <span className="text-blue-600">Akhir</span> (stok)</p>
+              <p><span className="text-shopee">Kode Item</span> → Nama Item → ... → <span className="text-shopee">Akhir</span> (stok)</p>
               <p className="text-gray-400 mt-1">File akan disimpan di Supabase Storage</p>
             </div>
           </div>
@@ -260,7 +259,7 @@ function SyncTab({ fileInputRef, onReset }) {
           <div className="flex gap-2">
             <button onClick={reset} className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Batal</button>
             <button onClick={findAndSync} disabled={syncing}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2">
+              className="px-5 py-2 bg-shopee hover:bg-shopee-dark text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2">
               {syncing ? (
                 <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>{statusText}</>
               ) : 'Sync Stok ke Database'}
@@ -270,7 +269,7 @@ function SyncTab({ fileInputRef, onReset }) {
         {syncing ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="w-10 h-10 border-4 border-shopee border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-sm text-gray-500 mt-3">{statusText}</p>
             </div>
           </div>
@@ -291,7 +290,7 @@ function SyncTab({ fileInputRef, onReset }) {
                     <td className="px-5 py-2.5 text-sm text-gray-400">{i + 1}</td>
                     <td className="px-5 py-2.5 text-sm font-mono text-gray-800">{r.kode_item}</td>
                     <td className="px-5 py-2.5 text-sm text-gray-600 max-w-[200px] truncate">{r.name}</td>
-                    <td className="px-5 py-2.5 text-sm text-right font-semibold text-blue-600">{r.stok}</td>
+                    <td className="px-5 py-2.5 text-sm text-right font-semibold text-shopee">{r.stok}</td>
                   </tr>
                 ))}
               </tbody>
@@ -329,8 +328,8 @@ function SyncTab({ fileInputRef, onReset }) {
           </div>
 
           {result.created > 0 && (
-            <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 mb-4">
-              <h3 className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+            <div className="bg-shopee-light/50 border border-shopee-light rounded-lg p-4 mb-4">
+              <h3 className="text-sm font-semibold text-shopee-dark flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -363,7 +362,7 @@ function SyncTab({ fileInputRef, onReset }) {
         </div>
 
         <button onClick={reset}
-          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition">
+          className="px-6 py-2.5 bg-shopee hover:bg-shopee-dark text-white rounded-lg text-sm font-medium transition">
           Import Lagi
         </button>
       </div>
@@ -394,7 +393,7 @@ function RiwayatTab() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-shopee border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -439,7 +438,7 @@ function RiwayatTab() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-green-600 font-medium">{log.updated_items} diupdate</span>
-              {(log.created_items || 0) > 0 && <span className="text-xs text-blue-600 font-medium">{log.created_items} baru</span>}
+              {(log.created_items || 0) > 0 && <span className="text-xs text-shopee font-medium">{log.created_items} baru</span>}
               {log.unmatched > 0 && <span className="text-xs text-red-500 font-medium">{log.unmatched} tidak cocok</span>}
               <span className="text-xs text-gray-400">{log.total_rows} item</span>
               <svg className={`w-4 h-4 text-gray-300 transition-transform ${expanded === log.id ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -476,7 +475,7 @@ function RiwayatTab() {
               })()}
               {log.file_url && (
                 <a href={log.file_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 mt-2">
+                  className="inline-flex items-center gap-1.5 text-xs text-shopee hover:text-shopee-dark mt-2">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -607,10 +606,10 @@ function TerbaruTab() {
     return (
       <div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition"
+          <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-shopee hover:bg-shopee-light/30 transition"
             onClick={() => innerFileRef.current?.click()}>
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-shopee-light rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-shopee" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -618,7 +617,7 @@ function TerbaruTab() {
               {step === 'parsing' ? statusText : 'Klik untuk upload file CSV'}
             </p>
             {step === 'parsing' && (
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mt-3"></div>
+              <div className="w-8 h-8 border-4 border-shopee border-t-transparent rounded-full animate-spin mx-auto mt-3"></div>
             )}
             <p className="text-sm text-gray-400 mt-1">Upload CSV (xReport IPOS 5, Mutasi Stok, atau list barcode)</p>
             <p className="text-xs text-gray-400 mt-1">Hanya kode_item / barcode yang diekstrak. Tidak ada perubahan stok.</p>
@@ -640,7 +639,7 @@ function TerbaruTab() {
           <div className="flex gap-2">
             <button onClick={reset} className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">Batal</button>
             <button onClick={markTerbaru} disabled={syncing}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2">
+              className="px-5 py-2 bg-shopee hover:bg-shopee-dark text-white rounded-lg text-sm font-medium transition disabled:opacity-50 flex items-center gap-2">
               {syncing ? (
                 <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>{statusText}</>
               ) : 'Tandai sebagai Terbaru'}
@@ -650,7 +649,7 @@ function TerbaruTab() {
         {syncing ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="w-10 h-10 border-4 border-shopee border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-sm text-gray-500 mt-3">{statusText}</p>
             </div>
           </div>
@@ -700,7 +699,7 @@ function TerbaruTab() {
           </div>
         </div>
         <button onClick={reset}
-          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition">
+          className="px-6 py-2.5 bg-shopee hover:bg-shopee-dark text-white rounded-lg text-sm font-medium transition">
           Import Lagi
         </button>
       </div>
@@ -768,7 +767,6 @@ function FilesTab() {
             kode_item: r.kode_item,
             name: r.name || 'Produk Baru',
             price: 0,
-            supplier: '',
             stock: r.stok,
           })
           if (!error) created++
@@ -804,7 +802,7 @@ function FilesTab() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-shopee border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -846,8 +844,8 @@ function FilesTab() {
                 <tr key={f.name} className="hover:bg-gray-50/50 transition">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-8 h-8 bg-shopee-light rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-shopee" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
@@ -871,7 +869,7 @@ function FilesTab() {
                         )}
                       </button>
                       <a href={publicUrl} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition font-medium">
+                        className="inline-flex items-center gap-1.5 text-xs text-shopee hover:text-shopee-dark bg-shopee-light hover:bg-shopee-light px-3 py-1.5 rounded-lg transition font-medium">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
@@ -919,7 +917,7 @@ export default function StockImport() {
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${
               tab === t.key
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-shopee text-white shadow-sm'
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
             }`}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

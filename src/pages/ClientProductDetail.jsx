@@ -13,7 +13,6 @@ export default function ClientProductDetail() {
   const [fullscreen, setFullscreen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [cartWiggle, setCartWiggle] = useState(false)
-
   useEffect(() => {
     supabase
       .from('items')
@@ -164,14 +163,14 @@ export default function ClientProductDetail() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               {product.categories?.name && (
                 <div>
-                  <span className="text-gray-400">Kategori</span>
+                  <span className="text-gray-400">Jenis</span>
                   <p className="font-medium text-gray-700">{product.categories.name}</p>
                 </div>
               )}
-              {product.supplier && (
+              {product.jenis && (
                 <div>
                   <span className="text-gray-400">Supplier</span>
-                  <p className="font-medium text-gray-700">{product.supplier}</p>
+                  <p className="font-medium text-gray-700">{product.jenis}</p>
                 </div>
               )}
               <div>

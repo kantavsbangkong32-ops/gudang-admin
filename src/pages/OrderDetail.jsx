@@ -172,7 +172,7 @@ export default function OrderDetail() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-shopee border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -186,7 +186,7 @@ export default function OrderDetail() {
           </svg>
         </div>
         <p className="text-gray-400">Pesanan tidak ditemukan</p>
-        <button onClick={() => navigate('/orders')} className="mt-4 text-sm text-blue-600 hover:underline">Kembali ke pesanan</button>
+        <button onClick={() => navigate('/orders')} className="mt-4 text-sm text-shopee hover:underline">Kembali ke pesanan</button>
       </div>
     )
   }
@@ -194,7 +194,7 @@ export default function OrderDetail() {
   return (
     <div className="max-w-3xl mx-auto">
       <button onClick={() => navigate('/orders')}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 mb-5 transition group">
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-shopee mb-5 transition group">
         <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
@@ -205,8 +205,8 @@ export default function OrderDetail() {
         <div className="p-6 border-b border-gray-50">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center">
-                <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 rounded-xl bg-shopee-light flex items-center justify-center">
+                <svg className="w-7 h-7 text-shopee" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
@@ -245,7 +245,7 @@ export default function OrderDetail() {
 
         <div className="p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-shopee" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
             Item Pesanan
@@ -269,7 +269,7 @@ export default function OrderDetail() {
 
           <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
             <span className="text-sm font-semibold text-gray-600">Total</span>
-            <span className="text-xl font-bold text-blue-600">Rp {total.toLocaleString('id-ID')}</span>
+            <span className="text-xl font-bold text-shopee">Rp {total.toLocaleString('id-ID')}</span>
           </div>
         </div>
 
@@ -293,7 +293,7 @@ export default function OrderDetail() {
               Tolak
             </button>
             <button onClick={() => updateStatus('processing')}
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 shadow-sm">
+              className="flex-1 py-3 bg-shopee hover:bg-shopee-dark text-white rounded-xl font-medium text-sm transition flex items-center justify-center gap-2 shadow-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>

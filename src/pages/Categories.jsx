@@ -5,8 +5,10 @@ export default function Categories() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
+  const [type, setType] = useState('product')
   const [editId, setEditId] = useState(null)
   const [editName, setEditName] = useState('')
+  const [editType, setEditType] = useState('product')
 
   useEffect(() => { loadCategories() }, [])
 
@@ -19,19 +21,20 @@ export default function Categories() {
   async function addCategory() {
     const trimmed = name.trim()
     if (!trimmed) return
-    const { data, error } = await supabase.from('categories').insert({ name: trimmed }).select()
+    const { data, error } = await supabase.from('categories').insert({ name: trimmed, type }).select()
     if (error) {
       alert('Gagal: ' + error.message)
       return
     }
     setName('')
+    setType('product')
     loadCategories()
   }
 
   async function updateCategory(id) {
     if (!editName.trim()) return
-    const { error } = await supabase.from('categories').update({ name: editName.trim() }).eq('id', id)
-    if (!error) { setEditId(null); setEditName(''); loadCategories() }
+    const { error } = await supabase.from('categories').update({ name: editName.trim(), type: editType }).eq('id', id)
+    if (!error) { setEditId(null); setEditName(''); setEditType('product'); loadCategories() }
   }
 
   async function deleteCategory(id) {
@@ -48,13 +51,24 @@ export default function Categories() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-        <div className="flex gap-3">
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-            placeholder="Nama kategori baru..."
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-shopee/20 focus:border-shopee outline-none transition text-sm"
-            onKeyDown={(e) => e.key === 'Enter' && addCategory()} />
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Nama Kategori</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="Nama kategori baru..."
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-shopee/20 focus:border-shopee outline-none transition text-sm"
+              onKeyDown={(e) => e.key === 'Enter' && addCategory()} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Tipe</label>
+            <select value={type} onChange={(e) => setType(e.target.value)}
+              className="px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-shopee/20 focus:border-shopee outline-none transition text-sm bg-white">
+              <option value="product">Jenis Barang</option>
+              <option value="supplier">Supplier</option>
+            </select>
+          </div>
           <button onClick={addCategory}
-            className="bg-shopee hover:bg-shopee-dark text-white px-6 py-2.5 rounded-lg transition text-sm font-medium flex items-center gap-2">
+            className="bg-shopee hover:bg-shopee-dark text-white px-6 py-2.5 rounded-lg transition text-sm font-medium flex items-center gap-2 h-[42px]">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -82,6 +96,7 @@ export default function Categories() {
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Kategori</th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipe</th>
                 <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
@@ -105,17 +120,32 @@ export default function Categories() {
                       </div>
                     )}
                   </td>
+                  <td className="px-6 py-4">
+                    {editId === cat.id ? (
+                      <select value={editType} onChange={(e) => setEditType(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-shopee/20 focus:border-shopee outline-none text-sm bg-white">
+                        <option value="product">Jenis Barang</option>
+                        <option value="supplier">Supplier</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-block text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                        cat.type === 'supplier' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {cat.type === 'supplier' ? 'Supplier' : 'Jenis Barang'}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     {editId === cat.id ? (
                       <div className="flex gap-2 justify-end">
-                        <button onClick={() => { setEditId(null); setEditName('') }}
+                        <button onClick={() => { setEditId(null); setEditName(''); setEditType('product') }}
                           className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition">Batal</button>
                         <button onClick={() => updateCategory(cat.id)}
                           className="px-3 py-1.5 text-sm text-white bg-shopee hover:bg-shopee-dark rounded-lg transition font-medium">Simpan</button>
                       </div>
                     ) : (
                       <div className="flex gap-2 justify-end">
-                        <button onClick={() => { setEditId(cat.id); setEditName(cat.name) }}
+                        <button onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditType(cat.type || 'product') }}
                           className="p-2 text-gray-400 hover:text-shopee hover:bg-shopee-light rounded-lg transition">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

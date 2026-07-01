@@ -107,7 +107,7 @@ export default function Orders() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-shopee border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
@@ -124,8 +124,8 @@ export default function Orders() {
             <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 transition-all">
               <div className="flex items-center justify-between">
                 <Link to={`/orders/${order.id}`} className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 rounded-xl bg-shopee-light flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-shopee" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                   </div>
@@ -159,7 +159,7 @@ export default function Orders() {
                         {statusList.map((s) => (
                           <button key={s} onClick={() => updateStatus(order.id, s)}
                             className={`w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-gray-50 flex items-center gap-2 ${
-                              order.status === s ? 'text-blue-600' : 'text-gray-700'
+                              order.status === s ? 'text-shopee' : 'text-gray-700'
                             }`}>
                             <span className={`w-2 h-2 rounded-full ${s === 'pending' ? 'bg-yellow-500' : s === 'processing' ? 'bg-orange-500' : s === 'completed' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                             {statusLabels[s] || s}

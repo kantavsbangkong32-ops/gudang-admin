@@ -10,8 +10,10 @@ export default function Products() {
   const [filterTanpaFoto, setFilterTanpaFoto] = useState(false)
   const [filterStok, setFilterStok] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [filterSupplier, setFilterSupplier] = useState('')
   const [categories, setCategories] = useState([])
   const [categorySearch, setCategorySearch] = useState('')
+  const [supplierSearch, setSupplierSearch] = useState('')
 
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => setCategories(data || []))
@@ -77,6 +79,7 @@ export default function Products() {
     if (filterStok === 'rendah' && (p.stock > 10 || p.stock <= 0)) return false
     if (filterStok === 'tersedia' && (!p.stock || p.stock <= 0)) return false
     if (filterCategory && p.category_id !== filterCategory) return false
+    if (filterSupplier && p.jenis !== filterSupplier) return false
     return true
   })
 
@@ -89,7 +92,7 @@ export default function Products() {
         </div>
         <Link
           to="/products/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm"
+          className="bg-shopee hover:bg-shopee-dark text-white px-5 py-2.5 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -108,7 +111,7 @@ export default function Products() {
             placeholder="Cari produk..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20 transition text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-shopee focus:ring-1 focus:ring-shopee/20 transition text-sm"
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -141,20 +144,47 @@ export default function Products() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input type="text" placeholder="Cari kategori..." value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs font-semibold rounded-full border border-gray-200 bg-white text-gray-600 focus:outline-none focus:border-blue-400 w-40" />
+              className="pl-8 pr-3 py-1.5 text-xs font-semibold rounded-full border border-gray-200 bg-white text-gray-600 focus:outline-none focus:border-shopee w-40" />
           </div>
           <button onClick={() => { setFilterCategory(''); setCategorySearch('') }}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
-              !filterCategory ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              !filterCategory ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
             }`}>
             Semua Kategori
           </button>
+            {categories
+              .filter((cat) => cat.type === 'product')
+              .filter((cat) => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+              .map((cat) => (
+                <button key={cat.id} onClick={() => setFilterCategory(filterCategory === cat.id ? '' : cat.id)}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+                    filterCategory === cat.id ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                  }`}>
+                  {cat.name}
+                </button>
+              ))}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <svg className="absolute left-2.5 top-2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="Cari supplier..." value={supplierSearch} onChange={(e) => setSupplierSearch(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-xs font-semibold rounded-full border border-gray-200 bg-white text-gray-600 focus:outline-none focus:border-shopee w-40" />
+          </div>
+          <button onClick={() => { setFilterSupplier(''); setSupplierSearch('') }}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+              !filterSupplier ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}>
+            Semua Supplier
+          </button>
           {categories
-            .filter((cat) => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+            .filter((cat) => cat.type === 'supplier')
+            .filter((cat) => cat.name.toLowerCase().includes(supplierSearch.toLowerCase()))
             .map((cat) => (
-              <button key={cat.id} onClick={() => setFilterCategory(filterCategory === cat.id ? '' : cat.id)}
+              <button key={cat.id} onClick={() => setFilterSupplier(filterSupplier === cat.name ? '' : cat.name)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
-                  filterCategory === cat.id ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                  filterSupplier === cat.name ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                 }`}>
                 {cat.name}
               </button>
@@ -164,7 +194,7 @@ export default function Products() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-shopee border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
@@ -219,14 +249,17 @@ export default function Products() {
                   <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{product.name}</p>
                   <p className="text-[11px] font-semibold text-gray-500 shrink-0 mt-0.5">{product.kode_item || '-'}</p>
                 </div>
-                <p className="text-base font-bold text-blue-600">
+                <p className="text-base font-bold text-shopee">
                   Rp {Number(product.price).toLocaleString('id-ID')}
                 </p>
-                <div className="border-t border-gray-100 pt-2">
+                <div className="border-t border-gray-100 pt-2 space-y-0.5">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-semibold text-blue-600">Stok: {product.stock ?? 0}</p>
+                    <p className="text-[11px] font-semibold text-shopee">Stok: {product.stock ?? 0}</p>
                     <p className="text-[10px] text-gray-400 text-right">{product.categories?.name || 'Uncategorized'}</p>
                   </div>
+                  {product.jenis && (
+                    <p className="text-[10px] text-gray-400 text-right">{product.jenis}</p>
+                  )}
                 </div>
               </div>
             </Link>

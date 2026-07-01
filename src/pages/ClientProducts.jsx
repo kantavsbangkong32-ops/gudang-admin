@@ -19,6 +19,8 @@ export default function ClientProducts() {
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState([])
   const [categorySearch, setCategorySearch] = useState('')
+  const [filterSupplier, setFilterSupplier] = useState('')
+  const [supplierSearch, setSupplierSearch] = useState('')
   const [adding, setAdding] = useState(null)
   const [cartCount, setCartCount] = useState(0)
   const [cartWiggle, setCartWiggle] = useState(false)
@@ -142,6 +144,7 @@ export default function ClientProducts() {
     if (filterStok === 'rendah' && (p.stock > 10 || p.stock <= 0)) return false
     if (filterStok === 'tersedia' && (!p.stock || p.stock <= 0)) return false
     if (filterCategory && p.category_id !== filterCategory) return false
+    if (filterSupplier && p.jenis !== filterSupplier) return false
     return true
   })
 
@@ -206,11 +209,38 @@ export default function ClientProducts() {
             Semua Kategori
           </button>
           {categories
+            .filter((cat) => cat.type === 'product')
             .filter((cat) => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
             .map((cat) => (
               <button key={cat.id} onClick={() => setFilterCategory(filterCategory === cat.id ? '' : cat.id)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
                   filterCategory === cat.id ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                }`}>
+                {cat.name}
+              </button>
+            ))}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="relative">
+            <svg className="absolute left-2 top-1.5 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" placeholder="Cari supplier..." value={supplierSearch} onChange={(e) => setSupplierSearch(e.target.value)}
+              className="pl-7 pr-2.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-full border border-gray-200 bg-white text-gray-600 focus:outline-none focus:border-shopee w-28 sm:w-40" />
+          </div>
+          <button onClick={() => { setFilterSupplier(''); setSupplierSearch('') }}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+              !filterSupplier ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}>
+            Semua Supplier
+          </button>
+          {categories
+            .filter((cat) => cat.type === 'supplier')
+            .filter((cat) => cat.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+            .map((cat) => (
+              <button key={cat.id} onClick={() => setFilterSupplier(filterSupplier === cat.name ? '' : cat.name)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+                  filterSupplier === cat.name ? 'bg-shopee text-white border-shopee' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                 }`}>
                 {cat.name}
               </button>
@@ -261,13 +291,16 @@ export default function ClientProducts() {
                     )}
                   </div>
                   <div className="flex-1" />
-                  <div className="border-t border-gray-100 pt-2">
+                  <div className="border-t border-gray-100 pt-2 space-y-0.5">
                     <div className="flex items-center justify-between">
                       <p className="text-[11px] font-semibold text-shopee">
                         Stok: {product.stock ?? 0}
                       </p>
                       <p className="text-[10px] text-gray-400 text-right">{product.categories?.name || 'Uncategorized'}</p>
                     </div>
+                    {product.jenis && (
+                      <p className="text-[10px] text-gray-400 text-right">{product.jenis}</p>
+                    )}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setQtyDialog(product); setQtyValue(1) }}

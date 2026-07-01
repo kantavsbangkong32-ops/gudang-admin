@@ -37,8 +37,8 @@ export default function Dashboard() {
   }, [])
 
   const cards = [
-    { label: 'Total Produk', value: stats.products, to: '/products', gradient: 'from-blue-600 to-blue-500', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
-    { label: 'Total Pesanan', value: stats.orders, to: '/orders', gradient: 'from-blue-500 to-blue-600', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+    { label: 'Total Produk', value: stats.products, to: '/products', gradient: 'from-shopee to-shopee', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+    { label: 'Total Pesanan', value: stats.orders, to: '/orders', gradient: 'from-shopee to-shopee-dark', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
     { label: 'Pending', value: stats.pending, to: '/orders', gradient: 'from-yellow-400 to-yellow-500', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
     { label: 'Kategori', value: stats.categories, to: '/categories', gradient: 'from-green-400 to-green-500', icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z' },
   ]
@@ -107,8 +107,8 @@ export default function Dashboard() {
               <p className="text-sm text-gray-400">Tambah, edit, hapus produk</p>
             </div>
           </Link>
-          <Link to="/orders" className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-transparent rounded-xl border border-blue-100 hover:border-blue-200 transition group">
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <Link to="/orders" className="flex items-center gap-4 p-4 bg-gradient-to-r from-shopee-light to-transparent rounded-xl border border-shopee-light hover:border-shopee-light transition group">
+            <div className="w-12 h-12 bg-shopee rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
